@@ -1,0 +1,57 @@
+mpi:
+    Ncore: 8
+paths:
+    source: 
+        activate: 'set +u; source /usr/local/envs/eve/eve/bin/activate ; set -u'
+    inputs: 
+        Step1:
+            clinvar_file : '/data/user/shared_projects/mavisp/ADCK1/downstream_analysis/mavisp_csv/15062023/ADCK1-simple_mode.csv'
+            MSA_data_folder: '/data/databases/EVE/local_MSA/ADCK1/align' 
+            MSA_list: 'example_mapping.csv'
+            MSA_weights_location: 'data/Step1/weights'
+            model_name_suffix: '13062023'
+            model_parameters_location: '/usr/local/envs/eve/EVE/EVE/default_model_params.json'
+        Step2:
+            protein_index: '0'
+            all_singles_mutations_folder: 'data/Step2/mutations/'
+        Step3:
+            labels_file_location: 'data/Step3/labels/ClinVar_labels.csv'
+            uncertainty_threshold_file: '/usr/local/envs/eve/EVE/utils/default_uncertainty_threshold.json'
+    results:
+        Step1:
+            VAE_checkpoint_location: 'data/results/VAE_parameters/'
+            training_logs_location: 'data/results/logs/'
+        Step2:
+            output_evol_indices_location: 'data/results/evol_indices/'
+        Step3:
+            eve_scores : 'data/results/EVE_scores'
+            plot_location: 'data/results/'
+            
+
+parameters:
+    Step2:
+        computation_mode : 'all_singles'
+        num_samples_compute_evol_indices: 20000
+        batch_size: 2048
+    Step3:
+        input_evol_indices_filename_suffix: '_20000_samples'
+        GMM_parameter_location: 'data/Step3/GMM_parameters/'
+        GMM_parameter_filename_suffix: 'retrained'
+        protein_GMM_weight: 0.3
+
+commands:
+    Step1: 
+        train_VAE: '/usr/local/envs/eve/EVE/train_VAE.py'
+    Step2:
+        compute_evol_indices: '/usr/local/envs/eve/EVE/compute_evol_indices.py'
+    Step3:
+        train_GMM_and_compute_EVE_scores: '/usr/local/envs/eve/EVE/train_GMM_and_compute_EVE_scores.py'
+
+
+
+clinvar_dict : 
+    Pathogenic, Pathogenic, Pathogenic: 1
+    Pathogenic; risk factor: 1
+    Pathogenic, Pathogenic: 1
+    Pathogenic: 1
+    Benign: 0

@@ -1,0 +1,153 @@
+# Sample configuration file for evcouplings monomer protein prediction pipeline.
+# This file determines all aspects of the computation:
+# - which compute environment to use
+# - which stages of the pipeline to run
+# - what the settings for each of the stages are
+
+# Minimal settings required before this configuration can be executed:
+# - set your environment, paths to tools and databases (at the end of this file)
+# - under "global", set prefix and sequence_id
+# - run it! :)
+
+# Configuration rules:
+# 1) Global settings override settings for stages
+# 2) Outputs of a stage are merged into "global" and fed into the input of subsequent stages
+#    (e.g., the alignment_file output of align will be used by the alignment_file input of couplings)
+# 3) All settings are explicitly specified here. No hidden defaults in code.
+# 4) Each stage is also passed the parameters in the "databases" and "tools" sections
+
+pipeline: protein_monomer
+
+# which stages of workflow to run. Uncomment downstream stages using # (however, no stage can be run before the previous
+# stage has been run)
+stages:
+    - align
+#    - couplings
+#    - compare
+#    - mutate
+#    - fold
+
+# Global job settings (which protein, region). These will override settings of the same name in each of the stages.
+# These are typically the settings you want to modify for each of your jobs, together with some settings in the align stage.
+global:
+    prefix: SMPD1
+
+    # mandatory sequence identifier (mandatory, even if sequence_file is given)
+    sequence_id: P17405
+
+    # optional FASTA file with target sequence (if blank, will fetch try to fetch sequence_id from databases.sequence_download_url)
+    # if sequence_file is set, sequence_id must be defined, but can be arbitrary identifier (does not have to match ID in file)
+    sequence_file: 
+
+    # cut to subregion of sequence (specify as list, e.g. [24, 286], leave blank for full sequence)
+    region:
+
+    # Clustering threshold for downweighting redudant sequences (Meff computation). E.g. 0.8 will cluster sequences
+    # at a 80% sequence identity cutoff
+    theta: 0.8
+
+    # number of cores to use. If running through evcouplings application, will be overriden by environment.cores
+    cpu: 2
+
+# Specify multiple batch jobs (if empty, only a single job will be run). Each entry (e.g. b_0.75) will be appended to
+# prefix
+# subjob have to be specified, for all other parameters jobs share the same values.
+batch:
+  
+
+# Sequence alignment generation/processing.
+align:
+    # standard: iterative sequence search and postprocessing using jackhmmer.
+    protocol: standard
+
+    # The following fields usually do not need to be set, since "global" defines them.
+    #      prefix: SMPD1
+    # sequence_id: P17405
+    # sequence_file:
+    # region:
+    # theta:
+
+    # index of first residue in sequence_id / sequence_file. This can be used to renumber sequences that already have
+    # been cut to a subsequence
+    first_index: 1
+
+    # Use bitscore threshold instead of E-value threshold for sequence search
+    use_bitscores: True
+
+    # jackhmmer domain- and sequence-level inclusion thresholds.
+    # if use_bitscores is True:
+    # - floating point number will be interpreted as a relative bitscore threshold (bits/residue)
+    # - integer will be interpreted as an absolute bitscore threshold
+    # if use_bitscore is False:
+    # - mantissa-exponent string or float will be interpreted literally
+    # - integer will be interpreted as negative of the exponent (10 -> 1E-10)
+    domain_threshold: 0.5
+    sequence_threshold: 0.5
+
+    # number of jackhmmer iterations
+    iterations: 5
+
+    # sequence database (specify possible databases and paths in "databases" section below)
+    database: uniref100
+
+    # compute the redundancy-reduced number of effective sequences (M_eff) already in the alignment stage.
+    # To save compute time, this computation is normally carried out in the couplings stage
+    compute_num_effective_seqs: False
+
+    # Filter sequence alignment at this % sequence identity cutoff. Can be used to cut computation time in
+    # the couplings stage (e.g. set to 95 to remove any sequence that is more than 95% identical to a sequence
+    # already present in the alignment). If blank, no filtering. If filtering, HHfilter must be installed.
+    seqid_filter:
+
+    # Only keep sequences that align to at least x% of the target sequence (i.e. remove fragments)
+    minimum_sequence_coverage: 50
+
+    # Only include alignment columns with at least x% residues (rather than gaps) during model inference
+    minimum_column_coverage: 70
+
+    # Create a file with extracted annotation from UniRef/UniProt sequence FASTA headers
+    extract_annotation: True
+    cpu: 2
+
+    # set to True to turn of jackhmmer bias correction
+    nobias: False
+
+    # if align stage has been run previously, reuse the generated raw sequence alignment coming out of jackhmmer
+    reuse_alignment: True
+
+    # create checkpoint files of HMM and aligment after each iteration
+    checkpoints_hmm: False
+    checkpoints_ali: False
+
+
+
+# Paths to databases used by evcouplings.
+databases:
+    # Sequence databases (only download the ones you want to use). You can also specify arbitrary databases in FASTA format
+    # using a database name of your choice here)
+    uniprot: 
+    uniref100: /data/databases/uniref100/uniref100.fasta
+    uniref90: 
+
+    # URL do download sequences if sequence_file is not given. {} will be replaced by sequence_id.
+    sequence_download_url: http://rest.uniprot.org/uniprot/{}.fasta
+
+    # Directory with PDB MMTF structures (leave blank to fetch structures from web)
+    pdb_mmtf_dir:
+
+    # SIFTS mapping information. Point to file paths in an existing directory, and if these files do not exist, they will be
+    # automatically generated and saved at the given file path (this may take a while).
+    # Periodically delete these files to more recent versions of SIFTS are used.
+    sifts_mapping_table: /n/groups/marks/databases/SIFTS/pdb_chain_uniprot_plus_current.o2.csv
+    sifts_sequence_db: /n/groups/marks/databases/SIFTS/pdb_chain_uniprot_plus_current.o2.fasta
+
+# Paths to external tools used by evcouplings. Please refer to README.md for installation instructions and which tools are required.
+tools:
+    jackhmmer: /usr/local/hhmmer/hmmer-3.3.2/src/jackhmmer
+    plmc: /usr/local/envs/eve/plmc/bin/plmc
+    hmmbuild: /usr/local/hhmmer/hmmer-3.3.2/src/hmmbuild
+    hmmsearch: /usr/local/hhmmer/hmmer-3.3.2/src/hmmsearch
+    hhfilter:
+    psipred: 
+    cns: 
+    maxcluster:

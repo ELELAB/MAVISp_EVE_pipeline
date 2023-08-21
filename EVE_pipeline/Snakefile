@@ -1,0 +1,231 @@
+################################# Options from config file #############################
+MSA_list = config['paths']['inputs']['Step1']['MSA_list']
+MSA_data_folder = config['paths']['inputs']['Step1']['MSA_data_folder']
+MSA_weights_location = config['paths']['inputs']['Step1']['MSA_weights_location']
+model_name_suffix = config['paths']['inputs']['Step1']['model_name_suffix']
+model_parameters_location = config['paths']['inputs']['Step1']['model_parameters_location']
+protein_index = config['paths']['inputs']['Step2']['protein_index']
+all_singles_mutations_folder = config['paths']['inputs']['Step2']['all_singles_mutations_folder']
+labels_file_location = config['paths']['inputs']['Step3']['labels_file_location']
+uncertainty_threshold_file =  config['paths']['inputs']['Step3']['uncertainty_threshold_file']
+VAE_checkpoint_location = config['paths']['results']['Step1']['VAE_checkpoint_location']
+training_logs_location = config['paths']['results']['Step1']['training_logs_location']
+output_evol_indices_location = config['paths']['results']['Step2']['output_evol_indices_location']
+GMM_parameter_location = config['parameters']['Step3']['GMM_parameter_location']
+plot_location = config['paths']['results']['Step3']['plot_location']
+eve_scores = config['paths']['results']['Step3']['eve_scores']
+computation_mode = config['parameters']['Step2']['computation_mode']
+num_samples  = config['parameters']['Step2']['num_samples_compute_evol_indices']
+batch_size = config['parameters']['Step2']['batch_size']
+input_evol_indices_filename_suffix = config['parameters']['Step3']['input_evol_indices_filename_suffix']
+clinvar_file = config['paths']['inputs']['Step1']['clinvar_file']
+GMM_parameter_filename_suffix = config['parameters']['Step3']['GMM_parameter_filename_suffix']
+protein_GMM_weight = config['parameters']['Step3']['protein_GMM_weight']
+train_VAE = config['commands']['Step1']['train_VAE']
+compute_evol_indices = config['commands']['Step2']['compute_evol_indices']
+train_GMM_and_compute_EVE_scores = config['commands']['Step3']['train_GMM_and_compute_EVE_scores']
+dict_clinvar = config['clinvar_dict']
+
+
+import pandas as pd
+import numpy as np
+import os 
+
+def get_name(csv):
+    # read the mapping.csv file and extract the cell 
+    # in the first row and first column which contain the 
+    # name of the protein that is used as appendix in the
+    # outputs
+    df = pd.read_csv(csv)  
+    return(str(df.iloc[0, 0]))
+
+def clinvar_label_maker(csv,
+                        clinvar_dict,
+                        protein_name,
+                        out):
+    # Check if path is available 
+    directory = os.path.dirname(out)
+    if os.path.exists(directory):
+        pass
+    else:
+        os.makedirs(directory, exist_ok=True)
+
+    # Start with the processing of Clinvar mutation
+    df = pd.read_csv(csv)
+    if 'ClinVar Interpretation' in df:
+        # Create a new DataFrame with just the "Mutation" and "Clinvar Interpretation" columns
+        new_df = df[['Mutation','ClinVar Interpretation']]
+        # loop over the rows in the DataFrame
+        for index, row in new_df.iterrows():
+            # get the value in the column to check
+            value_to_check = row['ClinVar Interpretation']
+            # check if the value is in the dictionary
+            if value_to_check in clinvar_dict.keys():
+                # if the value is in the dictionary, replace it with the corresponding key
+                new_df.at[index, 'ClinVar Interpretation'] = clinvar_dict[value_to_check]
+            else:
+                # replace with Nan the rest 
+                new_df.at[index, 'ClinVar Interpretation'] = np.nan
+        new_df = new_df.dropna(subset=["ClinVar Interpretation"]) # drop it
+        
+        # Create a new column called "My Column" with a constant value
+        new_df.insert(0, 'protein_name', protein_name)
+        new_df.columns = ['protein_name','mutations','ClinVar_labels']
+        
+        # save the updated DataFrame to a new csv file
+        if new_df['ClinVar_labels'].isna().all():
+            return('No variants')
+        else:
+            new_df.to_csv(out, index=False)
+    else:
+        pass
+
+clinvar_label_maker(clinvar_file,
+                    config['clinvar_dict'],
+                    get_name(MSA_list),
+                    labels_file_location)
+
+
+
+
+rule all:
+    input:  
+        # build the strings of the output files
+        ########################## Step1 #############################
+        VAE_checkpoint_location + get_name(MSA_list) + '_' + model_name_suffix + '_final',
+        training_logs_location + get_name(MSA_list) + '_' + model_name_suffix +'_losses.csv',
+        ########################## Step2 #############################
+        output_evol_indices_location + get_name(MSA_list) +'_'+ str(num_samples)+'_samples.csv',
+       
+        ########################## Step3 #############################
+        eve_scores + '/all_EVE_scores'+'_'+  model_name_suffix +'.csv'
+
+
+########################## Step1 #############################
+rule step1:
+    input:
+        MSA_list,
+        model_parameters_location 
+    output:
+        out = VAE_checkpoint_location + get_name(MSA_list) + '_' + model_name_suffix + '_final',
+        log = training_logs_location + get_name(MSA_list) + '_' + model_name_suffix +'_losses.csv'
+    shell:
+        """
+        export OMP_NUM_THREADS={config[mpi][Ncore]}
+        export OPENBLAS_NUM_THREADS={config[mpi][Ncore]}
+        export MKL_NUM_THREADS={config[mpi][Ncore]}
+        export VECLIB_MAXIMUM_THREADS={config[mpi][Ncore]}
+        export NUMEXPR_NUM_THREADS={config[mpi][Ncore]}
+        
+        
+        {config[paths][source][activate]}
+        mkdir -p {MSA_weights_location}
+        mkdir -p {VAE_checkpoint_location}
+        mkdir -p {training_logs_location}
+
+        python {train_VAE} \
+            --MSA_data_folder {MSA_data_folder} \
+            --MSA_list {MSA_list} \
+            --protein_index {protein_index} \
+            --MSA_weights_location {MSA_weights_location} \
+            --VAE_checkpoint_location {VAE_checkpoint_location} \
+            --model_name_suffix {model_name_suffix} \
+            --model_parameters_location {model_parameters_location} \
+            --training_logs_location {training_logs_location}
+       """ 
+
+
+
+########################## Step2 #############################
+rule step2:
+    input:
+        MSA_list,
+        model_parameters_location,
+        out = VAE_checkpoint_location + get_name(MSA_list) + '_' + model_name_suffix + '_final',
+        log = training_logs_location + get_name(MSA_list) + '_' + model_name_suffix +'_losses.csv'
+    output:
+        evol_indices = output_evol_indices_location + get_name(MSA_list) +'_'+ str(num_samples)+'_samples.csv'
+    shell:
+        """
+        export OMP_NUM_THREADS={config[mpi][Ncore]}
+        export OPENBLAS_NUM_THREADS={config[mpi][Ncore]}
+        export MKL_NUM_THREADS={config[mpi][Ncore]}
+        export VECLIB_MAXIMUM_THREADS={config[mpi][Ncore]}
+        export NUMEXPR_NUM_THREADS={config[mpi][Ncore]}
+        {config[paths][source][activate]}
+
+        mkdir -p {all_singles_mutations_folder}
+        mkdir -p {output_evol_indices_location}
+
+        python {compute_evol_indices} \
+            --MSA_data_folder {MSA_data_folder} \
+            --MSA_list {MSA_list} \
+            --protein_index {protein_index} \
+            --MSA_weights_location {MSA_weights_location} \
+            --VAE_checkpoint_location {VAE_checkpoint_location} \
+            --model_name_suffix {model_name_suffix} \
+            --model_parameters_location {model_parameters_location} \
+            --computation_mode {computation_mode} \
+            --all_singles_mutations_folder {all_singles_mutations_folder} \
+            --output_evol_indices_location {output_evol_indices_location} \
+            --num_samples_compute_evol_indices {num_samples} \
+            --batch_size {batch_size}
+        """ 
+
+
+
+
+
+########################## Step3 #############################
+rule step3:
+    input:
+        MSA_list,
+        evol_indices = output_evol_indices_location + get_name(MSA_list) + '_'+ str(num_samples)+'_samples.csv' ,
+    output:
+        scores = eve_scores + '/all_EVE_scores'+'_'+ model_name_suffix +'.csv',
+    shell:
+        """
+        export OMP_NUM_THREADS={config[mpi][Ncore]}
+        export OPENBLAS_NUM_THREADS={config[mpi][Ncore]}
+        export MKL_NUM_THREADS={config[mpi][Ncore]}
+        export VECLIB_MAXIMUM_THREADS={config[mpi][Ncore]}
+        export NUMEXPR_NUM_THREADS={config[mpi][Ncore]}
+        
+        {config[paths][source][activate]}
+
+        mkdir -p {eve_scores}
+ 
+        if [ -f {labels_file_location} ]
+            then 
+                mkdir -p {plot_location} 
+                python {train_GMM_and_compute_EVE_scores} \
+                    --input_evol_indices_location {output_evol_indices_location} \
+                    --input_evol_indices_filename_suffix {input_evol_indices_filename_suffix} \
+                    --protein_list {MSA_list} \
+                    --output_eve_scores_location {eve_scores} \
+                    --output_eve_scores_filename_suffix {model_name_suffix} \
+                    --GMM_parameter_location {GMM_parameter_location} \
+                    --GMM_parameter_filename_suffix {GMM_parameter_filename_suffix} \
+                    --compute_EVE_scores \
+                    --protein_GMM_weight {protein_GMM_weight} \
+                    --plot_histograms \
+                    --plot_scores_vs_labels \
+                    --plot_location  {plot_location} \
+                    --labels_file_location  {labels_file_location} \
+                    --default_uncertainty_threshold_file_location {uncertainty_threshold_file} \
+                    --verbose
+            else
+                python {train_GMM_and_compute_EVE_scores} \
+                    --input_evol_indices_location {output_evol_indices_location} \
+                    --input_evol_indices_filename_suffix {input_evol_indices_filename_suffix} \
+                    --protein_list {MSA_list} \
+                    --output_eve_scores_location {eve_scores} \
+                    --output_eve_scores_filename_suffix {model_name_suffix} \
+                    --GMM_parameter_location {GMM_parameter_location} \
+                    --GMM_parameter_filename_suffix {GMM_parameter_filename_suffix} \
+                    --compute_EVE_scores \
+                    --default_uncertainty_threshold_file_location {uncertainty_threshold_file} \
+                    --verbose
+        fi
+        """ 
+
