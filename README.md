@@ -22,11 +22,11 @@ If you use this code, please follow the [citation guidelines on the EVE original
 GitHub](https://github.com/OATML/EVE) to properly cite EVE. Currently, this means 
 citing the main EVE publication:
 
-```https://www.nature.com/articles/s41586-021-04043-8```
+```Frazer, J., Notin, P., Dias, M. et al. Disease variant prediction with deep generative models of evolutionary data. Nature 599, 91–95 (2021). https://doi.org/10.1038/s41586-021-04043-8```
 
 Please also cite the original MAVISp paper:
 
-```...```
+```Arnaudi, M., Beltrame, L., Degn, K., Utichi, M., Sánchez-Izquierdo, P., Scrima, S., ... & Papaleo, E. (2022). MAVISp: Multi-layered Assessment of VarIants by Structure for proteins. bioRxiv, 2022-10.```
  
 EVE serves as a model designed to predict the clinical relevance of 
 human genetic variants by leveraging evolutionary sequence information 
