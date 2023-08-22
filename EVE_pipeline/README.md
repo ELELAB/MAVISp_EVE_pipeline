@@ -78,8 +78,6 @@ In particular:
 Notice that the specified number of cores should be the same when running
 snakemake from command line and the config file.
 
-
-
 ### Running the pipeline
 
 Just run:
@@ -89,7 +87,7 @@ snakemake --configfile config.yaml -c 8
 ```
 
 Where `cores` is the number of core to use and `config.yaml` is the config file. 
- 
+
 ## Output
 The pipeline will automatically generate a `data/` folder in which subfolders and files will be created depending
 on workflow step. An example following the `example_mapping.csv` above: 
