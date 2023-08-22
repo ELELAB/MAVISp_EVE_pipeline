@@ -1,6 +1,10 @@
 MIT License
 
-Copyright (c) 2023 ELELAB
+This pipeline is based on the example bash scripts available on the original EVE 
+GitHub (https://github.com/OATML-Markslab/EVE/tree/master/examples). These and
+derived code in this repository are Copyright (c) 2021 Pascal Notin
+
+The rest of the pipeline has Copyright (c) 2023 Simone Scrima, Danish Cancer Institute
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
