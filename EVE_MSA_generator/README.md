@@ -6,12 +6,10 @@ in the `.csv` . This MSA then can be used for the EVE software.
 
 ## Requirements
 
-### Softwares
+### Software
 
-```
-[EVcouplings](https://github.com/debbiemarkslab/EVcouplings)
-[HMMER](http://hmmer.org/download.html)
-```
+  - [EVcouplings](https://github.com/debbiemarkslab/EVcouplings)
+  - [HMMER](http://hmmer.org/download.html)
 
 Please follow their respective websites for installation instructions.
 For our purposes, we installed them in a custom Python environment using
@@ -21,7 +19,7 @@ For our purposes, we installed them in a custom Python environment using
 
   - UniRef100, as available on [UniProt](https://www.uniprot.org/help/downloads)
 
-We have used UniRef100 - using other UniRef100 database is also possible.
+We have used UniRef100 - using other UniRef databases is also possible.
 
 ## Installation
 
