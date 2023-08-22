@@ -6,7 +6,7 @@ This is a customizable snakemake pipeline for computing EVE scores for a protein
 It is based on the available scripts for running EVE, described on the original
 [EVE GitHub](https://github.com/OATML/EVE).
 
-If you use thie code, please cite the original EVE paper, as well as the original
+If you use this code, please cite the original EVE paper, as well as the original
 MAVISp paper, as stated in the README file in the main folder of this repository.
 
 ## Requirements
@@ -34,52 +34,21 @@ provide the required input files (see below) and run Snakemake as described belo
 
 ### Input files 
 
-#### `data` folder
-
-The `data/` folder is divided in multiple subfolders containing different
-mandatory input files and folders where the output will be stored.
-
-```
-data/
-|----- Step1/  
-        |----- mapping/
-               example_mapping.csv
-        |----- weights/
-|----- Step2/
-        |----- mutations/
-|----- Step3
-        |----- labels/
-               PTEN_ClinVar_labels.csv
-|----- results
-        |----- EVE_scores  
-        |----- VAE_parameters  
-        |----- logs
-        |----- evol_indices
-```
+### example_mapping.csv
 
 The `example_mapping.csv` file needs to be modified with information on the protein(s)
 of interest and has the following format:
 
+```
 protein_name,msa_location,theta
 NALP7_HUMAN,NALP7_HUMAN_b03.a2m,0.2 
 ```
 
-The first field specifies the name of our protein, the second
-specifies the name of the alignment file and the theta is the
-"Sequence weighting hyperparameter" for EVE.
+The first field specifies the name of the protein of interest, the second
+specifies the name of the alignment file and the theta is the "Sequence weighting hyperparameter" for EVE.
+The name `example_mapping.csv` was kept as a default from the original EVE workflow.
+However, it can be renamed by the user.
 
-The `PTEN_ClinVar_labels.csv` contains the reference labels from ClinVar and 
-has the following format:
-
-```
-protein_name,mutations,ClinVar_labels
-1433G_HUMAN,D99N,0.0
-1433G_HUMAN,D129E,1.0
-```
-
-Where the first column is the protein name as specified in the `example_mapping.csv`
-and where `0.0` represents its reference classification in Clinvar, with 0.0 as benign
-and `1.0` as pathogenic.
 
 #### config.yaml
 
@@ -87,24 +56,29 @@ The `config.yaml` contains all the customizable options of the pipeline:
 
 ```
 mpi:
-    Ncore: 8 
+    Ncore: 8
 paths:
     source: 
         activate: 'set +u; source /usr/local/envs/eve/eve/bin/activate ; set -u'
     inputs: 
-        MSA_data_folder: '/data/databases/EVE/08112021/MSAs/' 
-        MSA_list: 'data/Step1/mapping/example_mapping.csv'
+        Step1:
+            clinvar_file : '/data/user/shared_projects/mavisp/ADCK1/downstream_analysis/mavisp_csv/15062023/ADCK1-simple_mode.csv'
+            MSA_data_folder: '/data/databases/EVE/local_MSA/ADCK1/align' 
+            MSA_list: 'example_mapping.csv'
 ```
 
 In particular:
 
   - `Ncore` specifies the number of cores to be used
-  - `MSA_data_folder` is the folder containing the multiple sequence alignments
-  for EVE. These should be named ...
+  - `clinvar_file` specify the path of the final `.csv` aggregated file from the MAVISp workflow
+  - `MSA_data_folder` is the path of the folder containing the multiple sequence alignments
+  for EVE. The name of the alignment is specified in `example_mapping.csv`, in the second columns (see above)
   - `MSA_list` should point to the `example_mapping.csv` file described above
 
 Notice that the specified number of cores should be the same when running
 snakemake from command line and the config file.
+
+
 
 ### Running the pipeline
 
@@ -117,10 +91,25 @@ snakemake --configfile config.yaml -c 8
 Where `cores` is the number of core to use and `config.yaml` is the config file. 
  
 ## Output
-The output files can be found in the folder `results` in `data/`.
-The final output folders should look like this:
+The pipeline will automatically generate a `data/` folder in which subfolders and files will be created depending
+on workflow step. An example following the `example_mapping.csv` above: 
 
 ```
+data/
+|----- Step1/  
+        |----- weights/
+        NALP7_HUMAN_theta_0.2.npy
+|----- Step2/
+        |----- mutations/
+        NALP7_HUMAN_all_singles.csv
+|----- Step3
+        |-----GMM_parameters
+               |----- 12082023
+                       GMM_model_dictionary_12082023  
+                       GMM_pathogenic_cluster_index_dictionary_12082023  
+                       GMM_stats_12082023.csv
+        |----- labels/
+               ClinVar_labels.csv
 |----- results
         |----- EVE_scores
                *.csv 
@@ -136,8 +125,9 @@ The final output folders should look like this:
                     |----- snakemake_example
                            *.png
                            *.png
-``` 
+```
 
+The final output files can be found in the folder `results` inside `data/`.
 The `.csv` file within `EVE_scores` contains all the EVE scores for out protein.
 On the other hand, EVE will generate automatically the `plots_scores_vs_labels` 
 and `plots_histograms` containing useful plots in PNG format.

@@ -5,7 +5,7 @@ Cancer Structural Biology, Danish Cancer Institute, 2100, Copenhagen, Denmark
 
 This repository containing the Evolutionary model of Variant Effects (EVE) 
 workflow for [the MAVISp project](https://github.com/ELELAB/MAVISp). It is made
-of two computational piplines: one for the generation of the multiple sequence
+of two computational pipelines: one for the generation of the multiple sequence
 alignment, which is necessary to run EVE, and one for the calculation of the EVE
 scores themselves.
 
@@ -14,17 +14,19 @@ steps that are necessary to run EVE, and not an reimplementation of the algorith
 itself. It expects the original EVE implementation to be installed and it is 
 derived from the instructions and scripts available on the [EVE GitHub](https://github.com/OATML/EVE).
 
-EVE was originally designed by ... and it is available at ... .
+The project is a joint collaboration between Marks lab (https://www.deboramarkslab.com/) 
+and the OATML group (https://oatml.cs.ox.ac.uk/). 
+It is available at :https://github.com/OATML-Markslab/EVE or at the webserver: https://evemodel.org/ .
 
 If you use this code, please follow the [citation guidelines on the EVE original 
 GitHub](https://github.com/OATML/EVE) to properly cite EVE. Currently, this means 
 citing the main EVE publication:
 
-...
+```https://www.nature.com/articles/s41586-021-04043-8```
 
 Please also cite the original MAVISp paper:
 
-...
+```...```
  
 EVE serves as a model designed to predict the clinical relevance of 
 human genetic variants by leveraging evolutionary sequence information 
