@@ -14,9 +14,9 @@ steps that are necessary to run EVE, and not an reimplementation of the algorith
 itself. It expects the original EVE implementation to be installed and it is 
 derived from the instructions and scripts available on the [EVE GitHub](https://github.com/OATML/EVE).
 
-The project is a joint collaboration between Marks lab (https://www.deboramarkslab.com/) 
-and the OATML group (https://oatml.cs.ox.ac.uk/). 
-It is available at :https://github.com/OATML-Markslab/EVE or at the webserver: https://evemodel.org/ .
+The original EVE project is a joint collaboration between [Marks lab](https://www.deboramarkslab.com/)
+and the [OATML group](https://oatml.cs.ox.ac.uk/). 
+It is available at https://github.com/OATML-Markslab/EVE or at the webserver: https://evemodel.org/ .
 
 If you use this code, please follow the [citation guidelines on the EVE original 
 GitHub](https://github.com/OATML/EVE) to properly cite EVE. Currently, this means 
