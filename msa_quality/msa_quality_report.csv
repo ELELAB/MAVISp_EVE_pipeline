@@ -1,0 +1,6 @@
+protein,uniprot,num_seqs,coverage,seqlen,quality,stats_file
+BCL2L10,NA,579,176,204,relaxed,/data/databases/EVE/local_MSA/BCL2L10/align/BCL2L10_alignment_statistics.csv
+ABCB6,NA,604953,581,842,none,/data/databases/EVE/local_MSA/ABCB6/align/ABCB6_alignment_statistics.csv
+EEF2K,NA,2527,724,725,relaxed,/data/databases/EVE/local_MSA/EEF2K/align/EEF2K_alignment_statistics.csv
+TRAP1,Q12931,56731,614,704,strict,/data/databases/EVE/local_MSA/TRAP1/align/TRAP1_alignment_statistics.csv
+BCL2A1,NA,5836,126,175,relaxed,/data/databases/EVE/local_MSA/BCL2A1/align/BCL2A1_alignment_statistics.csv
